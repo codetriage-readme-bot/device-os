@@ -8,8 +8,8 @@ function display_help ()
     echo '
 usage: release.sh [--output-directory=<binary_output_directory>]
                   (--platform=<argon|asom|boron|bsom...
-                  |core|electron|p1|photon|xenon|xsom>...
-                  | --platform-id=<0|6|8|10|12|13|14|22|23|24>)
+                  |core|electron|p1|photon|xenon|xsom|bg96>...
+                  | --platform-id=<0|6|8|10|12|13|14|22|23|24|25>)
                   [--debug] [--help] [--tests]
 
 Generate the binaries for a versioned release of the Device OS. This utility
@@ -250,6 +250,10 @@ elif [ ! -z $PLATFORM ]; then
             PLATFORM_ID="24"
             MESH=true
             ;;
+        "bg96")
+            PLATFORM_ID="25"
+            MESH=true
+            ;;
         *)
             echo "ERROR: No rules to release platform: \"$PLATFORM\"!"
             exit 6
@@ -295,6 +299,10 @@ else
             ;;
         24)
             PLATFORM="xsom"
+            MESH=true
+            ;;
+        25)
+            PLATFORM="bg96"
             MESH=true
             ;;
         *)
