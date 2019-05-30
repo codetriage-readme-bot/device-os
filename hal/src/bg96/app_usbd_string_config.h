@@ -40,8 +40,6 @@
 #ifndef APP_USBD_STRING_CONFIG_H
 #define APP_USBD_STRING_CONFIG_H
 
-#include "app_usbd_langid.h"
-
 /**
  * @defgroup app_usbd_string_conf USBD string configuration
  * @ingroup app_usbd_string_desc
@@ -69,7 +67,7 @@
  * @ref APP_USBD_STRINGS_LANGIDS.
  */
 #define APP_USBD_STRINGS_MANUFACTURER    \
-    APP_USBD_STRING_DESC('P', 'a', 'r', 't', 'i', 'c', 'l', 'e')
+    APP_USBD_STRING_DESC("Particle")
 
 /**
  * @brief Define whether @ref APP_USBD_STRINGS_MANUFACTURER is created by @ref APP_USBD_STRING_DESC
@@ -83,8 +81,7 @@
  * List of product names defined the same way like in @ref APP_USBD_STRINGS_MANUFACTURER
  */
 #define APP_USBD_STRINGS_PRODUCT         \
-    APP_USBD_STRING_DESC('B', 'G', '9', '6', ' ', 'C', 'D', 'C', ' ', 'M', 'o', 'd', 'e')
-
+    APP_USBD_STRING_DESC("BG96 CDC Mode")
 
 
 /**
@@ -103,7 +100,6 @@
  * There is only one SERIAL number inside the library and it is Language independent.
  */
 #define APP_USBD_STRING_SERIAL          g_extern_serial_number
-    // APP_USBD_STRING_DESC('0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0')
 
 /**
  * @brief Define whether @ref APP_USBD_STRING_SERIAL is created by @ref APP_USBD_STRING_DESC
@@ -128,9 +124,9 @@
  * - @c ...     : List of string descriptors for each defined language.
  */
 #define APP_USBD_STRINGS_USER \
-    X(APP_USER_1, , APP_USBD_STRING_DESC('S', 'e', 'r', 'i', 'a', 'l')) \
-    X(USBD_CONTROL_STRING_IDX, , APP_USBD_STRING_DESC('B', 'G', '9', '6', ' ', 'C', 'o', 'n', 't', 'r', 'o', 'l', ' ', 'I', 'n', 't', 'e', 'r', 'f', 'a', 'c', 'e')) \
-    X(USBD_WCID_STRING_IDX, = 0xee, APP_USBD_STRING_DESC('M', 'S', 'F', 'T', '1', '0', '0', 0xee))
+    X(APP_USER_1, , APP_USBD_STRING_DESC("BG96 Serial")) \
+    X(USBD_CONTROL_STRING_IDX, , APP_USBD_STRING_DESC("BG96 Control Interface")) \
+    X(USBD_WCID_STRING_IDX, = 0xee, APP_USBD_STRING_DESC("MSFT100\xee"))
 
 /** @} */
 #endif /* APP_USBD_STRING_CONFIG_H */
