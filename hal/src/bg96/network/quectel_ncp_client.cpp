@@ -22,15 +22,15 @@
 #include "at_response.h"
 #include "network_config_db.h"
 
-#include "check.h"
-#include "pinmap_hal.h"
-#include "scope_guard.h"
 #include "serial_stream.h"
+#include "check.h"
+#include "scope_guard.h"
+#include "pinmap_hal.h"
 
-#include "core_hal.h"
-#include "delay_hal.h"
 #include "gpio_hal.h"
 #include "timer_hal.h"
+#include "delay_hal.h"
+#include "core_hal.h"
 
 #include "stream_util.h"
 
@@ -39,37 +39,37 @@
 
 #include <algorithm>
 
-#define CHECK_PARSER(_expr)                                                                                                                                                        \
-    ({                                                                                                                                                                             \
-        const auto _r = _expr;                                                                                                                                                     \
-        if (_r < 0) {                                                                                                                                                              \
-            this->parserError(_r);                                                                                                                                                 \
-            return _r;                                                                                                                                                             \
-        }                                                                                                                                                                          \
-        _r;                                                                                                                                                                        \
-    })
+#define CHECK_PARSER(_expr) \
+        ({ \
+            const auto _r = _expr; \
+            if (_r < 0) { \
+                this->parserError(_r); \
+                return _r; \
+            } \
+            _r; \
+        })
 
-#define CHECK_PARSER_OK(_expr)                                                                                                                                                     \
-    do {                                                                                                                                                                           \
-        const auto _r = _expr;                                                                                                                                                     \
-        if (_r < 0) {                                                                                                                                                              \
-            this->parserError(_r);                                                                                                                                                 \
-            return _r;                                                                                                                                                             \
-        }                                                                                                                                                                          \
-        if (_r != ::particle::AtResponse::OK) {                                                                                                                                    \
-            return SYSTEM_ERROR_UNKNOWN;                                                                                                                                           \
-        }                                                                                                                                                                          \
-    } while (false)
+#define CHECK_PARSER_OK(_expr) \
+        do { \
+            const auto _r = _expr; \
+            if (_r < 0) { \
+                this->parserError(_r); \
+                return _r; \
+            } \
+            if (_r != ::particle::AtResponse::OK) { \
+                return SYSTEM_ERROR_AT_NOT_OK; \
+            } \
+        } while (false)
 
-#define CHECK_PARSER_URC(_expr)                                                                                                                                                    \
-    ({                                                                                                                                                                             \
-        const auto _r = _expr;                                                                                                                                                     \
-        if (_r < 0) {                                                                                                                                                              \
-            self->parserError(_r);                                                                                                                                                 \
-            return _r;                                                                                                                                                             \
-        }                                                                                                                                                                          \
-        _r;                                                                                                                                                                        \
-    })
+#define CHECK_PARSER_URC(_expr) \
+        ({ \
+            const auto _r = _expr; \
+            if (_r < 0) { \
+                self->parserError(_r); \
+                return _r; \
+            } \
+            _r; \
+        })
 
 namespace particle {
 
@@ -353,6 +353,64 @@ int QuectelNcpClient::getImei(char* buf, size_t size) {
     const size_t n = CHECK_PARSER(resp.readLine(buf, size));
     CHECK_PARSER_OK(resp.readResult());
     return n;
+}
+
+int QuectelNcpClient::queryAndParseAtCops(CellularSignalQuality* qual) {
+    int act;
+    char mobileCountryCode[4] = {0};
+    char mobileNetworkCode[4] = {0};
+
+    // Reformat the operator string to be numeric
+    // (allows the capture of `mcc` and `mnc`)
+    int r = CHECK_PARSER(parser_.execCommand("AT+COPS=3,2"));
+    CHECK_TRUE(r == AtResponse::OK, SYSTEM_ERROR_AT_NOT_OK);
+
+    auto resp = parser_.sendCommand("AT+COPS?");
+    r = CHECK_PARSER(resp.scanf("+COPS: %*d,%*d,\"%3[0-9]%3[0-9]\",%d", mobileCountryCode,
+                                    mobileNetworkCode, &act));
+    CHECK_TRUE(r == 3, SYSTEM_ERROR_AT_RESPONSE_UNEXPECTED);
+    r = CHECK_PARSER(resp.readResult());
+    CHECK_TRUE(r == AtResponse::OK, SYSTEM_ERROR_AT_NOT_OK);
+
+    // `atoi` returns zero on error, which is an invalid `mcc` and `mnc`
+    cgi_.mobile_country_code = static_cast<uint16_t>(::atoi(mobileCountryCode));
+    cgi_.mobile_network_code = static_cast<uint16_t>(::atoi(mobileNetworkCode));
+
+    switch (static_cast<CellularAccessTechnology>(act)) {
+        case CellularAccessTechnology::NONE:
+        case CellularAccessTechnology::GSM:
+        case CellularAccessTechnology::GSM_COMPACT:
+        case CellularAccessTechnology::UTRAN:
+        case CellularAccessTechnology::GSM_EDGE:
+        case CellularAccessTechnology::UTRAN_HSDPA:
+        case CellularAccessTechnology::UTRAN_HSUPA:
+        case CellularAccessTechnology::UTRAN_HSDPA_HSUPA:
+        case CellularAccessTechnology::LTE:
+        case CellularAccessTechnology::EC_GSM_IOT:
+        case CellularAccessTechnology::E_UTRAN: {
+            break;
+        }
+        default: {
+            return SYSTEM_ERROR_BAD_DATA;
+        }
+    }
+    if (qual) {
+        qual->accessTechnology(static_cast<CellularAccessTechnology>(act));
+    }
+
+    return SYSTEM_ERROR_NONE;
+}
+
+int QuectelNcpClient::getCellularGlobalIdentity(CellularGlobalIdentity* cgi) {
+    const NcpClientLock lock(this);
+    CHECK_TRUE(connState_ != NcpConnectionState::DISCONNECTED, SYSTEM_ERROR_INVALID_STATE);
+    CHECK_TRUE(cgi, SYSTEM_ERROR_INVALID_ARGUMENT);
+    CHECK(checkParser());
+    CHECK(queryAndParseAtCops(nullptr));
+
+    *cgi = cgi_;
+
+    return SYSTEM_ERROR_NONE;
 }
 
 int QuectelNcpClient::getSignalQuality(CellularSignalQuality* qual) {
