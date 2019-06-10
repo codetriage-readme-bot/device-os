@@ -115,8 +115,10 @@
 #define HAL_PLATFORM_NCP_UPDATABLE (0)
 #endif /* HAL_PLATFORM_NCP_UPDATABLE */
 
+// FIXME: why are these here? Are they supposed to be overridable by platform?
 #define HAL_PLATFORM_MCU_ANY (0xFF)
 #define HAL_PLATFORM_MCU_DEFAULT (0)
+// /FIXME
 
 #ifndef HAL_PLATFORM_ETHERNET
 #define HAL_PLATFORM_ETHERNET (0)
@@ -245,5 +247,9 @@
 #ifndef HAL_PLATFORM_NFC
 #define HAL_PLATFORM_NFC 0
 #endif /* HAL_PLATFORM_NFC */
+
+#ifndef HAL_PLATFORM_RADIO_STACK
+#define HAL_PLATFORM_RADIO_STACK (0)
+#endif /* HAL_PLATFORM_RADIO_STACK */
 
 #endif /* HAL_PLATFORM_H */

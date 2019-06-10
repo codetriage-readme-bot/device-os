@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2018 Particle Industries, Inc.  All rights reserved.
+ * Copyright (c) 2019 Particle Industries, Inc.  All rights reserved.
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -15,19 +15,25 @@
  * License along with this library; if not, see <http://www.gnu.org/licenses/>.
  */
 
-/* s140_nrf52_6.0.0 */
-SOFTDEVICE_MINIMUM_RAM_BASE = 0x1628;
-SOFTDEVICE_MINIMUM_CODE_BASE = 0x26000;
+#pragma once
 
-/*
- * Reserving 32K in total. The more concurrent BLE links, the more RAM is required for SoftDevice.
- *
- * IMPORTANT: when changing these values, make sure to update module_radio_stack in ota_module_bounds.c
- *
+#include "module_info.h"
+#include "ota_flash_hal.h"
+
+#ifdef __cplusplus
+extern "C" {
+#endif // __cplusplus
+
+/**
+ * Augments the module info with radio stack module info.
  */
-APP_RAM_BASE = 32K;
-/* Reserving 192K in total */
-APP_CODE_BASE = 192K;
+int platform_radio_stack_fetch_module_info(hal_system_info_t* sys_info, bool create);
 
-ASSERT ( APP_RAM_BASE >= SOFTDEVICE_MINIMUM_RAM_BASE, "APP_RAM_BASE needs to be adjusted" );
-ASSERT ( APP_CODE_BASE >= SOFTDEVICE_MINIMUM_CODE_BASE, "APP_CODE_BASE needs to be adjusted" );
+/**
+ * Update the radio stack from the given module. The module has been validated for integrity and matching platform and dependencies checked.
+ */
+hal_update_complete_t platform_radio_stack_update_module(const hal_module_t* module);
+
+#ifdef __cplusplus
+}
+#endif // __cplusplus
